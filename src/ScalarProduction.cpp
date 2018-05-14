@@ -202,8 +202,14 @@ double ScalarProduction::dSigmahatgg2SSdptGeneral(double *X, size_t dim, void *m
     double mc = ScalarMasses[finalindex[0]-1];
     double md = ScalarMasses[finalindex[1]-1];
     double shat = X[0];
-    double that = (pow(mc,2)+pow(md,2))/2.0 - X[0]/2 + 1.0/2.0*sqrt(lambda(X[0],mc*mc,md*md)-4*X[0]*X[1]*X[1]);
-    double uhat = (pow(mc,2)+pow(md,2))/2.0 - X[0]/2 - 1.0/2.0*sqrt(lambda(X[0],mc*mc,md*md)-4*X[0]*X[1]*X[1]);
+    double lam = lambda(X[0],mc*mc,md*md);
+    if (lam < 4*X[0]*X[1]*X[1]) // Only consider the on-shell production
+    {
+        return 0;
+    }
+    double that = (pow(mc,2)+pow(md,2))/2.0 - X[0]/2 + 1.0/2.0*sqrt(lam-4*X[0]*X[1]*X[1]);
+    double uhat = (pow(mc,2)+pow(md,2))/2.0 - X[0]/2 - 1.0/2.0*sqrt(lam-4*X[0]*X[1]*X[1]);
+    double Jacobi = 2.0*X[1]*shat/(sqrt(lam-4*X[0]*X[1]*X[1]));
     double c1 = Get_LambdaAndSymmetryFactor(finalindex[0],finalindex[1],1);// The symmetry factor is included here
     double c2 = Get_LambdaAndSymmetryFactor(finalindex[0],finalindex[1],2);
     ComplexType CTriTop = c1*vev*xiUp[0]/(X[0] - Mh * Mh + img*Mh*_Gammah) + c2*vev*xiUp[1]/(X[0] - _mHH*_mHH + img *_mHH*_GammaH);
@@ -212,7 +218,7 @@ double ScalarProduction::dSigmahatgg2SSdptGeneral(double *X, size_t dim, void *m
     ComplexType CBoxBot = xiDown[finalindex[0]-1]*xiDown[finalindex[1]-1];
     ComplexType P1 = CTriTop*FTriFermion(shat,MT) + CTriBot*FTriFermion(shat,MB) + CBoxTop*FBoxFermion(shat,that,uhat,MT,mc,md) + CBoxBot*FBoxFermion(shat,that,uhat,MB,mc,md);
     ComplexType P2 = CBoxTop*GBoxFermion(shat,that,uhat,MT,mc,md) + CBoxTop*GBoxFermion(shat,that,uhat,MB,mc,md);
-    return norm(P1) + norm(P2);
+    return Jacobi*(norm(P1) + norm(P2));
 }
 
 double ScalarProduction::Get_CS_Parton(double shat, double pt,int H1, int H2)
