@@ -8,7 +8,7 @@ INCDIR := include
 OBJDIR := obj
 CXX = $(LT)/../bin/f++
 FFLAG = -I$(LT)/../include -I$(INCDIR) -I$(THDMC)/../src `gsl-config --cflags`
-FLIBS = -L$(LT) -looptools `gsl-config --libs` -L$(THDMC) -l2HDMC -L/usr/local/gfortran/lib -lgfortran
+FLIBS = -L$(LT) -looptools `gsl-config --libs` -L$(THDMC) -l2HDMC -lHB -lHS -L/usr/local/gfortran/lib -lgfortran
 
 SRC = $(wildcard $(SRCDIR)/*.cpp)
 OBJ = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRC))

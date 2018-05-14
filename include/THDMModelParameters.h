@@ -9,31 +9,31 @@
 #define PI2 (PI*PI)
 #define PiHalf (PI/2)
 
-#define MZ 91.1876
+#define _MZ 91.1876
 #define GAZ 2.4952
-#define MZ2 (MZ*MZ)
-#define MW 80.385
+#define MZ2 (_MZ*_MZ)
+#define _MW 80.385
 #define GAW 2.085
-#define MW2 (MW*MW)
-#define cw (MW/MZ)
-#define w (acos(cw))
-#define sw (sin(w))
+#define MW2 (_MW*_MW)
+#define cw (_MW/_MZ)
+#define thw (acos(cw))
+#define sw (sin(thw))
 #define cw2 (cw*cw)
 #define sw2 (sw*sw)
 
-#define GF 1.16637e-5
+#define _GF 1.16637e-5
 #define Alfa0 (1/137.035999074)
-#define AlfaGF (sqrt2/pi*GF*MW2*SW2)
+#define AlfaGF (sqrt2/pi*_GF*MW2*SW2)
 #define AlfaMZ (1/127.944)
 #define Alfa Alfa0
 #define Alfa2 (Alfa*Alfa)
 #define DeltaAlfa5Had .027547
 #define AlfasMZ .1184
-#define Alfas 0.0
+#define Alfas 0.1184
 #define Alfashgg 0.1184
 
-#define v 246.2
-#define v2 (v*v)
+#define vev 246.2
+#define vev2 (vev*vev)
 
 
 #define Mh 125.09

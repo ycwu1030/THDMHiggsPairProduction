@@ -2,6 +2,7 @@
 #include <fstream>
 #include "THDMModelParameters.h"
 #include "Loopfuncs.h"
+#include "ScalarProduction.h"
 
 using namespace std;
 
@@ -9,13 +10,11 @@ int main(int argc, char const *argv[])
 {
     ofstream outfile("THDMtest.dat");
     ltini();
-    ComplexType FTriTop;
-    double shat;
-    for (int i = 0; i < 10; ++i)
+    ScalarProduction sp;
+    double shat = 600.0*600.0;
+    for (double pt = 50; pt < 200; pt+=5)
     {
-        shat = pow(500.0 + i*10.0,2);
-        FTriTop = FTriFermion(shat,MT);
-        outfile<<shat<<"  "<<FTriTop<<endl;
+        outfile<<pt<<"  "<<sp.Get_CS_Parton(shat,pt,1,1)<<endl;
     }
     ltexi();
     return 0;
