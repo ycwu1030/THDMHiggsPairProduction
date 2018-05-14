@@ -22,7 +22,7 @@ ComplexType FBoxFermion(double shat, double that, double uhat, double mf, double
     double U1 = U - rhoc;
     double T2 = T - rhod;
     double U2 = U - rhod;
-    return 2/(S*S)*(4.0*S+8.0*S*mf2*C0(0,0,shat,mf2,mf2,mf2)-2.0*S*(S+rhoc+rhod-8)*mf2*mf2
+    return 1.0/(S*S)*(4.0*S+8.0*S*mf2*C0(0,0,shat,mf2,mf2,mf2)-2.0*S*(S+rhoc+rhod-8)*mf2*mf2
         *(D0(0,0,mhc2,mhd2,shat,uhat,mf2,mf2,mf2,mf2)+D0(0,0,mhc2,mhd2,shat,that,mf2,mf2,mf2,mf2)+D0(0,mhc2,0,mhd2,that,uhat,mf2,mf2,mf2,mf2))
         +(rhoc+rhod-8.0)*mf2*(T1*C0(0,mhc2,that,mf2,mf2,mf2)+U1*C0(0,mhc2,uhat,mf2,mf2,mf2)
             +U2*C0(0,mhd2,uhat,mf2,mf2,mf2)+T2*C0(0,mhd2,that,mf2,mf2,mf2)-

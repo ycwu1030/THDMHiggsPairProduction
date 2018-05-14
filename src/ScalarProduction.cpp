@@ -1,3 +1,4 @@
+#include <iostream>
 #include "ScalarProduction.h"
 
 double lambda(double a,double b,double c)
@@ -212,6 +213,10 @@ double ScalarProduction::dSigmahatgg2SSdptGeneral(double *X, size_t dim, void *m
     double Jacobi = 2.0*X[1]*shat/(sqrt(lam-4*X[0]*X[1]*X[1]));
     double c1 = Get_LambdaAndSymmetryFactor(finalindex[0],finalindex[1],1);// The symmetry factor is included here
     double c2 = Get_LambdaAndSymmetryFactor(finalindex[0],finalindex[1],2);
+#ifdef DEBUG
+    std::cout<<Jacobi<<std::endl;
+    std::cout<<c1<<"  "<<c2<<std::endl;
+#endif
     ComplexType CTriTop = c1*vev*xiUp[0]/(X[0] - Mh * Mh + img*Mh*_Gammah) + c2*vev*xiUp[1]/(X[0] - _mHH*_mHH + img *_mHH*_GammaH);
     ComplexType CTriBot = c1*vev*xiDown[0]/(X[0] - Mh * Mh + img*Mh*_Gammah) + c2*vev*xiDown[1]/(X[0] - _mHH*_mHH + img *_mHH*_GammaH);
     ComplexType CBoxTop = xiUp[finalindex[0]-1]*xiUp[finalindex[1]-1];

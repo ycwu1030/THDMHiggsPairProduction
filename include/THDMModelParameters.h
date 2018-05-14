@@ -3,7 +3,7 @@
 
 #include <cmath>
 
-#define DEBUG 1
+// #define DEBUG 1
 
 #define PI 3.1415926535897932384626433832795029
 #define PI2 (PI*PI)
