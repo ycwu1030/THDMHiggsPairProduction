@@ -24,7 +24,13 @@ all: HiggsPairProd.x MKOBJDIR
 %.x: %.cpp $(OBJ)
 	$(CXX) $< $(FFLAG) $(OBJ) $(FLIBS) $(RPATH) -o $@
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(INC)
+$(OBJDIR)/pcubature.o: $(SRCDIR)/pcubature.cpp $(INCDIR)/cubature.h
+	$(CXX) $(FFLAG) -c $< -o $@
+
+$(OBJDIR)/hcubature.o: $(SRCDIR)/hcubature.cpp $(INCDIR)/cubature.h
+	$(CXX) $(FFLAG) -c $< -o $@
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(INCDIR)/%.h
 	$(CXX) $(FFLAG) -c $< -o $@
 
 MKOBJDIR:

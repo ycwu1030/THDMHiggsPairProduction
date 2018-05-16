@@ -3,6 +3,7 @@
 
 #include "THDMModelParameters.h"
 #include "Loopfuncs.h"
+#include "cubature.h"
 // Using 2HDMC for calculating the model parameters
 #include "THDM.h"
 #include "DecayTable.h"
@@ -27,6 +28,8 @@ public:
     double CS_pp2SS_MISER(double s, int H1, int H2);
     double CS_pp2SS_VEGAS(double s, int H1, int H2);
     double CS_pp2SS_STEPBYSTEP(double s, int H1, int H2);
+    double CS_pp2SS_HCUBATURE(double s,int H1, int H2);
+    double CS_pp2SS_PCUBATURE(double s,int H1, int H2);
 
 // private:
     THDM _mod; // The THDM model object which will provide some calculations in the 2HDM model
