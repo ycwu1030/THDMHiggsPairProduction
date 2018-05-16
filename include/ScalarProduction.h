@@ -4,6 +4,7 @@
 #include "THDMModelParameters.h"
 #include "Loopfuncs.h"
 #include "cubature.h"
+#include "cuba.h" // The Cuba Library
 // Using 2HDMC for calculating the model parameters
 #include "THDM.h"
 #include "DecayTable.h"
@@ -14,6 +15,13 @@
 #include <gsl/gsl_integration.h>
 #include "LHAPDF/LHAPDF.h"
 
+enum CUBAINTEGRATOR
+{
+    VEGAS = 0,
+    SUAVE = 1,
+    DIVONNE = 2,
+    CUHRE = 3
+};
 
 class ScalarProduction
 {
@@ -30,6 +38,8 @@ public:
     double CS_pp2SS_STEPBYSTEP(double s, int H1, int H2);
     double CS_pp2SS_HCUBATURE(double s,int H1, int H2);
     double CS_pp2SS_PCUBATURE(double s,int H1, int H2);
+    double CS_pp2SS_CUBAVEGAS(double s,int H1, int H2, CUBAINTEGRATOR Choice);
+
 
 // private:
     THDM _mod; // The THDM model object which will provide some calculations in the 2HDM model

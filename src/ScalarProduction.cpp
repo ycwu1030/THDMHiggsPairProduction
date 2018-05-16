@@ -44,6 +44,7 @@ ScalarProduction::~ScalarProduction()
     delete pdf;
     _dt = NULL;
     pdf = NULL;
+    std::cout<<"Thanks for Using ScalarProduction"<<std::endl;
 }
 
 void ScalarProduction::CalcWidth()
@@ -349,8 +350,8 @@ double ScalarProduction::CS_pp2SS_STEPBYSTEP(double s, int H1, int H2)
 typedef struct
 {
     double s;
-    double H1;
-    double H2;
+    int H1;
+    int H2;
     ScalarProduction *sp;
 }FINALCS_MCPARAMS;
 double FINALCS_MC_INTEGRAND(double *X, size_t dim, void * params)
@@ -480,4 +481,66 @@ double ScalarProduction::CS_pp2SS_PCUBATURE(double s,int H1, int H2)
 
     pcubature(1,CUBATURE_INTEGRAND,&fp,3,XL,XU,0,0.001,0.001,ERROR_INDIVIDUAL,res,&err);
     return res[0];
+}
+
+int CUBA_INTEGRAND(const int *ndim, const cubareal xx[], const int *ncomp, cubareal ff[], void *userdata)
+{
+// X[0] Mhh 
+// X[1] pt
+// X[2] x
+    double X[3];
+    FINALCS_MCPARAMS *fp = (FINALCS_MCPARAMS*) userdata;
+    double mc = fp->sp->ScalarMasses[fp->H1-1];
+    double md = fp->sp->ScalarMasses[fp->H2-2];
+// CUBA INTEGRAL in unit-cubic, so need to change the variables
+    X[0] = xx[0]*(sqrt(fp->s)-0.1-mc-md-0.1)+mc+md+0.1;
+    X[1] = xx[1]*(sqrt(fp->s)/2-0.1-0.1)+0.1;
+    X[2] = xx[2];
+    double shat = X[0]*X[0];
+    double tau = shat/fp->s;
+    if (X[2]>1||X[2]<tau)
+    {
+        ff[0] = 0;
+        return 0;
+    }
+    double pdf1 = fp->sp->pdf->xfxQ2(21,X[2],shat);
+    double pdf2 = fp->sp->pdf->xfxQ2(21,tau/X[2],shat);
+    ff[0] = fp->sp->GeV2tofb*(sqrt(fp->s)-0.1-mc-md-0.1)*(sqrt(fp->s)/2-0.1-0.1)*(1.0/X[2]*(pdf1/X[2])*(pdf2/(tau/X[2]))*2*X[0]/fp->s)*(fp->sp->dSigmahatgg2SSdptGeneral(shat, X[1], fp->H1, fp->H2));
+    return 0;
+}
+double ScalarProduction::CS_pp2SS_CUBAVEGAS(double s,int H1, int H2, CUBAINTEGRATOR Choice)
+{
+    int comp, nregions, neval, fail;
+    cubareal integral[NCOMP], error[NCOMP], prob[NCOMP];
+    FINALCS_MCPARAMS fp = {s,H1,H2,this};
+    switch(Choice){
+        case VEGAS: Vegas(3, 1, CUBA_INTEGRAND, &fp, NVEC,
+                            EPSREL, EPSABS, VERBOSE, SEED,
+                            MINEVAL, MAXEVAL, NSTART, NINCREASE, NBATCH,
+                            GRIDNO, STATEFILE, SPIN,
+                            &neval, &fail, integral, error, prob); break;
+        case SUAVE: Suave(3, 1, CUBA_INTEGRAND, &fp, NVEC,
+                                EPSREL, EPSABS, VERBOSE | LAST, SEED,
+                                MINEVAL, MAXEVAL, NNEW, NMIN, FLATNESS,
+                                STATEFILE, SPIN,
+                                &nregions, &neval, &fail, integral, error, prob); break;
+        case DIVONNE: Divonne(3, 1, CUBA_INTEGRAND, &fp, NVEC,
+                        EPSREL, EPSABS, VERBOSE, SEED,
+                        MINEVAL, MAXEVAL, KEY1, KEY2, KEY3, MAXPASS,
+                        BORDER, MAXCHISQ, MINDEVIATION,
+                        NGIVEN, LDXGIVEN, NULL, NEXTRA, NULL,
+                        STATEFILE, SPIN,
+                        &nregions, &neval, &fail, integral, error, prob); break;
+        case CUHRE: Cuhre(3, 1, CUBA_INTEGRAND, &fp, NVEC,
+                        EPSREL, EPSABS, VERBOSE | LAST,
+                        MINEVAL, MAXEVAL, KEY,
+                        STATEFILE, SPIN,
+                        &nregions, &neval, &fail, integral, error, prob);break;
+        default: Vegas(3, 1, CUBA_INTEGRAND, &fp, NVEC,
+                            EPSREL, EPSABS, VERBOSE, SEED,
+                            MINEVAL, MAXEVAL, NSTART, NINCREASE, NBATCH,
+                            GRIDNO, STATEFILE, SPIN,
+                            &neval, &fail, integral, error, prob); break;
+    }
+    return (fail==0)?integral[0]:-1*integral[0];
 }

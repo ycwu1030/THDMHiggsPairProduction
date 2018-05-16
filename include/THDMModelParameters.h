@@ -71,4 +71,40 @@
 #define Tan(i) tan(i)
 #define Cot(i) (1/tan(i))
 
+//--- CUBA VARIABLES
+#define NDIM 3
+#define NCOMP 1
+#define NVEC 1
+#define EPSREL 1e-2
+#define EPSABS 1e-1
+#define VERBOSE 0
+#define LAST 4
+#define SEED 0
+#define MINEVAL 0
+#define MAXEVAL 500000
+
+#define NSTART 2000
+#define NINCREASE 500
+#define NBATCH 1000
+#define GRIDNO 0
+#define STATEFILE NULL
+#define SPIN NULL
+
+#define NNEW 1000
+#define NMIN 2
+#define FLATNESS 25.
+
+#define KEY1 47
+#define KEY2 1
+#define KEY3 1
+#define MAXPASS 5
+#define BORDER 0.
+#define MAXCHISQ 10.
+#define MINDEVIATION .25
+#define NGIVEN 0
+#define LDXGIVEN NDIM
+#define NEXTRA 0
+
+#define KEY 0
+
 #endif

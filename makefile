@@ -2,14 +2,15 @@
 LT = /Users/ycwu/Library/Mathematica/Applications/LoopTools/x86_64-Darwin/lib
 THDMC = /Volumes/working-HDD/Users/teddy/workingspace/EWPM/2HDMC-1.7.0.bac/lib
 LHAPDF = /Volumes/working-HDD/Users/teddy/workingspace/Useful-Package/LHAPDF/6.1.6/lib
+CUBA = /Volumes/working-HDD/Users/teddy/workingspace/Useful-Package/Cuba-4.2
 #LT = /Users/mac/work/LoopTools/x86_64-Darwin/lib
 
 SRCDIR := src
 INCDIR := include
 OBJDIR := obj
 CXX = $(LT)/../bin/f++
-FFLAG = -I$(LT)/../include -I$(INCDIR) -I$(THDMC)/../src `gsl-config --cflags` -I$(LHAPDF)/../include
-FLIBS = -L$(LT) -looptools `gsl-config --libs` -L$(THDMC) -l2HDMC -lHB -lHS -L/usr/local/gfortran/lib -lgfortran -L$(LHAPDF) -lLHAPDF
+FFLAG = -I$(LT)/../include -I$(INCDIR) -I$(THDMC)/../src `gsl-config --cflags` -I$(LHAPDF)/../include -I$(CUBA)
+FLIBS = -L$(LT) -looptools `gsl-config --libs` -L$(THDMC) -l2HDMC -lHB -lHS -L/usr/local/gfortran/lib -lgfortran -L$(LHAPDF) -lLHAPDF -L$(CUBA) -lcuba
 RPATH = -Xlinker -rpath $(LHAPDF)
 
 INC = $(wildcard $(INCDIR)/*.h)
@@ -30,7 +31,7 @@ $(OBJDIR)/pcubature.o: $(SRCDIR)/pcubature.cpp $(INCDIR)/cubature.h
 $(OBJDIR)/hcubature.o: $(SRCDIR)/hcubature.cpp $(INCDIR)/cubature.h
 	$(CXX) $(FFLAG) -c $< -o $@
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(INCDIR)/%.h
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(INC)
 	$(CXX) $(FFLAG) -c $< -o $@
 
 MKOBJDIR:
