@@ -27,6 +27,15 @@ ScalarProduction::ScalarProduction()
     Calc_Lambda();
     Calc_Xi();
     pdf = LHAPDF::mkPDF("MSTW2008lo68cl");
+    as_ode.setOrderQCD(5);
+    as_ode.setMZ(_MZ);
+    as_ode.setAlphaSMZ(Alfas);
+    as_ode.setQuarkMass(1, MD);
+    as_ode.setQuarkMass(2, MU);
+    as_ode.setQuarkMass(3, MS);
+    as_ode.setQuarkMass(4, MC);
+    as_ode.setQuarkMass(5, MB);
+    as_ode.setQuarkMass(6, MT);
 }
 ScalarProduction::~ScalarProduction()
 { 
@@ -212,17 +221,14 @@ double ScalarProduction::dSigmahatgg2SSdthatGeneral(double shat, double that, in
     double uhat = (pow(mc,2)+pow(md,2))-shat-that;
     double c1 = Get_LambdaAndSymmetryFactor(H1,H2,1);// The symmetry factor is included here
     double c2 = Get_LambdaAndSymmetryFactor(H1,H2,2);
-#ifdef DEBUG
-    std::cout<<Jacobi<<std::endl;
-    std::cout<<c1<<"  "<<c2<<std::endl;
-#endif
     ComplexType CTriTop = c1*vev*xiUp[0]/(shat - Mh * Mh + img*Mh*_Gammah) + c2*vev*xiUp[1]/(shat - _mHH*_mHH + img *_mHH*_GammaH);
     ComplexType CTriBot = c1*vev*xiDown[0]/(shat - Mh * Mh + img*Mh*_Gammah) + c2*vev*xiDown[1]/(shat - _mHH*_mHH + img *_mHH*_GammaH);
     ComplexType CBoxTop = xiUp[H1-1]*xiUp[H2-1];
     ComplexType CBoxBot = xiDown[H1-1]*xiDown[H2-1];
     ComplexType P1 = CTriTop*FTriFermion(shat,MT) + CTriBot*FTriFermion(shat,MB) + CBoxTop*FBoxFermion(shat,that,uhat,MT,mc,md) + CBoxBot*FBoxFermion(shat,that,uhat,MB,mc,md);
     ComplexType P2 = CBoxTop*GBoxFermion(shat,that,uhat,MT,mc,md) + CBoxTop*GBoxFermion(shat,that,uhat,MB,mc,md);
-    return (norm(P1) + norm(P2));
+    clearcache();
+    return (norm(P1) + norm(P2))*Prefactor*pow(as_ode.alphasQ2(shat),2);
 }
 
 double ScalarProduction::dSigmahatgg2SSdptGeneral(double shat, double pt, int H1, int H2)
@@ -239,77 +245,142 @@ double ScalarProduction::dSigmahatgg2SSdptGeneral(double shat, double pt, int H1
     return Jacobi*dSigmahatgg2SSdthatGeneral(shat,that,H1,H2);
 }
 
-double ScalarProduction::dSigmahatgg2SSdCthetaGeneral(double shat, double Ctheta, int H1, int H2)
+typedef struct
 {
-// X[0] is the shat i.e. Mhh2;
-// X[1] is the cos\theta polar angle of the Higgs ;
+    double Mhh;
+    double S;
+    ScalarProduction *sp;
+}PARTONLUMINOSITY_QAGSPARAMS;
+double PARTONLUMINOSITY_QAGS_INTEGRAND(double X, void * params)
+{
+    PARTONLUMINOSITY_QAGSPARAMS* fp = (PARTONLUMINOSITY_QAGSPARAMS*) params;
+    double shat = fp->Mhh*fp->Mhh;
+    double tau = shat/fp->S;
+    if (X>1||X<tau)
+    {
+        return 0;
+    }
+    double pdf1 = fp->sp->pdf->xfxQ2(21,X,shat);
+    double pdf2 = fp->sp->pdf->xfxQ2(21,tau/X,shat);
+    return 1.0/X*(pdf1/X)*(pdf2/(tau/X))*2*fp->Mhh/fp->S;
+}
+double ScalarProduction::PARTONINTEGRAL(double mhh, double S)
+{
+    gsl_integration_workspace * w = gsl_integration_workspace_alloc(1000);
+    double res, err;
+
+    PARTONLUMINOSITY_QAGSPARAMS fp = {mhh,S,this};
+    gsl_function F;
+    F.function=&PARTONLUMINOSITY_QAGS_INTEGRAND;
+    F.params = &fp;
+
+    gsl_integration_qags(&F,mhh*mhh/S,1,0,1e-3,1000,w,&res,&err);
+
+    gsl_integration_workspace_free(w);
+
+    return res;
+}
+
+typedef struct
+{
+   double shat;
+   int H1;
+   int H2;
+   ScalarProduction *sp; 
+}PARTONCS_QAGSPARAMS;
+double PARTONCS_QAGS_INTEGRAND(double X, void * params)
+{
+    PARTONCS_QAGSPARAMS* fp = (PARTONCS_QAGSPARAMS*) params;
+    return fp->sp->dSigmahatgg2SSdptGeneral(fp->shat, X, fp->H1, fp->H2);
+}
+double ScalarProduction::Sigmagg2SSGeneral(double shat,int H1,int H2)
+{
     double mc = ScalarMasses[H1-1];
     double md = ScalarMasses[H2-1];
     double lam = lambda(shat,mc*mc,md*md);
-    double that = (pow(mc,2)+pow(md,2))/2.0 - shat/2 + 1.0/2.0*sqrt(lam)*Ctheta;
-    double Jacobi = 1.0/2.0*sqrt(lam);
-    return Jacobi*dSigmahatgg2SSdthatGeneral(shat,that,H1,H2);
-}
-
-double ScalarProduction::dSigmapp2SSdMhhdptdxGeneral(double Mhh, double pt, double x, double s, int H1, int H2)
-{
-    double shat = Mhh*Mhh;
-    double tau = shat/s;
-    if (x<tau || x>1)
-    {
-        return 0;
-    }
-    double pdf1 = pdf->xfxQ2(21,x,shat); // this is x*f1
-    double pdf2 = pdf->xfxQ2(21,tau/x,shat); // this is tau/x*f2
-    double partoncs = dSigmahatgg2SSdptGeneral(shat,pt,H1,H2);
-    return 1.0/x*pdf1*pdf2*2.0/Mhh*partoncs;
-}
-
-double ScalarProduction::dSigmapp2SSdMhhdCthetadxGeneral(double Mhh, double Ctheta, double x, double s, int H1, int H2)
-{
-    double shat = Mhh*Mhh;
-    double tau = shat/s;
-    if (x<tau || x>1)
-    {
-        return 0;
-    }
-    double pdf1 = pdf->xfxQ2(21,x,shat); // this is x*f1
-    double pdf2 = pdf->xfxQ2(21,tau/x,shat); // this is tau/x*f2
-    double partoncs = dSigmahatgg2SSdCthetaGeneral(shat,Ctheta,H1,H2);
-    return 1.0/x*pdf1*pdf2*2.0/Mhh*partoncs;
-}
-
-typedef struct{
-    int H1;
-    int H2;
-    double s;
-    ScalarProduction *sp;
-}VOIDVEGAS;
-
-double partialCS_for_VEGAS_PT(double *X, size_t dim, void *modparameter)
-{
-    VOIDVEGAS *fp = (VOIDVEGAS*)modparameter;
-    return (fp->sp)->dSigmapp2SSdMhhdptdxGeneral(X[0],X[1],X[2],fp->s,fp->H1,fp->H2);
-}
-double partialCS_for_VEGAS_Ctheta(double *X, size_t dim, void *modparameter)
-{
-    VOIDVEGAS *fp = (VOIDVEGAS*)modparameter;
-    return (fp->sp)->dSigmapp2SSdMhhdCthetadxGeneral(X[0],X[1],X[2],fp->s,fp->H1,fp->H2);
-}
-
-double ScalarProduction::CS_pp2SS_PT(double sqrts, int H1, int H2)
-{
-    _eta = H1==H2?1.0/2.0:1.0;
+    gsl_integration_workspace * w = gsl_integration_workspace_alloc(1000);
     double res, err;
 
-    double Q2L[3] = {ScalarMasses[H1-1]+ScalarMasses[H2-1]+0.1,0,0};
-    double Q2U[3] = {sqrts-0.1,sqrts/2.0-0.1,1};
+    PARTONCS_QAGSPARAMS fp = {shat,H1,H2,this};
+    gsl_function F;
+    F.function=&PARTONCS_QAGS_INTEGRAND;
+    F.params = &fp;
+
+    gsl_integration_qags(&F,0.1,sqrt(lam/shat)/2.0,0,1e-3,1000,w,&res,&err);
+
+    gsl_integration_workspace_free(w);
+
+    return res;
+}
+
+typedef struct
+{
+   double s;
+   int H1;
+   int H2;
+   ScalarProduction *sp; 
+}FINALCS_QAGSPARAMS;
+double FINALCS_QAGS_INTEGRAND(double X, void * params)
+{
+    FINALCS_QAGSPARAMS* fp = (FINALCS_QAGSPARAMS*) params;
+    return fp->sp->PARTONINTEGRAL(X, fp->s)*fp->sp->Sigmagg2SSGeneral(X*X,fp->H1,fp->H2);
+}
+double ScalarProduction::CS_pp2SS_STEPBYSTEP(double s, int H1, int H2)
+{
+    double mc = ScalarMasses[H1-1];
+    double md = ScalarMasses[H2-1];
+    gsl_integration_workspace * w = gsl_integration_workspace_alloc(1000);
+    double res, err;
+
+    FINALCS_QAGSPARAMS fp = {s,H1,H2,this};
+    gsl_function F;
+    F.function=&FINALCS_QAGS_INTEGRAND;
+    F.params = &fp;
+
+    gsl_integration_qags(&F,mc+md+0.1,sqrt(s),0,1e-3,1000,w,&res,&err);
+
+    gsl_integration_workspace_free(w);
+
+    return res*GeV2tofb;
+}
+
+typedef struct
+{
+    double s;
+    double H1;
+    double H2;
+    ScalarProduction *sp;
+}FINALCS_MCPARAMS;
+double FINALCS_MC_INTEGRAND(double *X, size_t dim, void * params)
+{
+// X[0] Mhh 
+// X[1] pt
+// X[2] x
+    FINALCS_MCPARAMS *fp = (FINALCS_MCPARAMS*) params;
+    double shat = X[0]*X[0];
+    double tau = shat/fp->s;
+    if (X[2]>1||X[2]<tau)
+    {
+        return 0;
+    }
+    double pdf1 = fp->sp->pdf->xfxQ2(21,X[2],shat);
+    double pdf2 = fp->sp->pdf->xfxQ2(21,tau/X[2],shat);
+    return (1.0/X[2]*(pdf1/X[2])*(pdf2/(tau/X[2]))*2*X[0]/fp->s)*(fp->sp->dSigmahatgg2SSdptGeneral(shat, X[1], fp->H1, fp->H2));
+}
+double ScalarProduction::CS_pp2SS_VEGAS(double s, int H1, int H2)
+{
+    double res, err;
+
+    double mc = ScalarMasses[H1-1];
+    double md = ScalarMasses[H2-1];
+    double XL[3] = {mc+md+0.1,0.1,0}; //Mhh, pt, x
+    double XU[3] = {sqrt(s)-0.1,sqrt(s)/2-0.1,1};
 
     const gsl_rng_type *T;
     gsl_rng *r;
 
-    VOIDVEGAS fp = {H1,H2,sqrts*sqrts,this};
-    gsl_monte_function G = {&partialCS_for_VEGAS_PT, 3, &fp};
+    FINALCS_MCPARAMS fp = {s,H1,H2,this};
+    gsl_monte_function G = {&FINALCS_MC_INTEGRAND, 3, &fp};
 
     size_t calls = 10000;
     gsl_rng_env_setup();
@@ -317,50 +388,51 @@ double ScalarProduction::CS_pp2SS_PT(double sqrts, int H1, int H2)
     T = gsl_rng_default;
     r = gsl_rng_alloc(T);
 
-    gsl_monte_vegas_state *s = gsl_monte_vegas_alloc(3);
+    gsl_monte_vegas_state *vs = gsl_monte_vegas_alloc(3);
 
-    gsl_monte_vegas_integrate(&G,Q2L,Q2U,3,calls,r,s,&res,&err);
+    gsl_monte_vegas_integrate(&G,XL,XU,3,calls,r,vs,&res,&err);
+    int tries = 0;
+    do
+      {
+        gsl_monte_vegas_integrate (&G, XL, XU, 3, calls, r, vs,
+                                   &res, &err);
+        // printf ("result = % .6f sigma = % .6f "
+                // "chisq/dof = %.1f\n", res, err, gsl_monte_vegas_chisq (s));
+        tries++;
+      }
+    while (fabs (gsl_monte_vegas_chisq (vs) - 1.0) > 0.2||tries<15);
 
-    do{
-        gsl_monte_vegas_integrate(&G,Q2L,Q2U,3,calls,r,s,&res,&err);
-    }while(fabs(gsl_monte_vegas_chisq(s)-1.0)>0.5);
-
-    gsl_monte_vegas_free(s);
+    gsl_monte_vegas_free(vs);
     gsl_rng_free(r);
-    s=NULL;
-    r=NULL;
 
-    return res*_eta*GeV2tofb*Prefactor;
+    return res*GeV2tofb;
 }
-
-double ScalarProduction::CS_pp2SS_Ctheta(double sqrts, int H1, int H2)
+double ScalarProduction::CS_pp2SS_MISER(double s, int H1, int H2)
 {
-    _eta = H1==H2?1.0/2.0:1.0;
     double res, err;
 
-    double Q2L[3] = {ScalarMasses[H1-1]+ScalarMasses[H2-1]+0.1,-1,0};
-    double Q2U[3] = {sqrts-0.1,1,1};
+    double mc = ScalarMasses[H1-1];
+    double md = ScalarMasses[H2-1];
+    double XL[3] = {mc+md+0.1,0.1,0}; //Mhh, pt, x
+    double XU[3] = {sqrt(s)-0.1,sqrt(s)/2-0.1,1};
 
     const gsl_rng_type *T;
     gsl_rng *r;
 
-    VOIDVEGAS fp = {H1,H2,sqrts*sqrts,this};
-    gsl_monte_function G = {&partialCS_for_VEGAS_Ctheta, 3, &fp};
+    FINALCS_MCPARAMS fp = {s,H1,H2,this};
+    gsl_monte_function G = {&FINALCS_MC_INTEGRAND, 3, &fp};
 
-    size_t calls = 1000;
+    size_t calls = 20000;
     gsl_rng_env_setup();
 
     T = gsl_rng_default;
     r = gsl_rng_alloc(T);
 
-    gsl_monte_vegas_state *s = gsl_monte_vegas_alloc(3);
+    gsl_monte_miser_state *vs = gsl_monte_miser_alloc (3);
+    gsl_monte_miser_integrate (&G, XL, XU, 3, calls, r, vs,
+                               &res, &err);
+    gsl_monte_miser_free (vs);
+    gsl_rng_free (r);
 
-    gsl_monte_vegas_integrate(&G,Q2L,Q2U,3,calls,r,s,&res,&err);
-
-    gsl_monte_vegas_free(s);
-    gsl_rng_free(r);
-    s=NULL;
-    r=NULL;
-
-    return res*_eta*GeV2tofb*Prefactor;
+    return res*GeV2tofb;
 }
