@@ -26,6 +26,7 @@ ScalarProduction::ScalarProduction()
     CalcWidth();
     Calc_Lambda();
     Calc_Xi();
+    LHAPDF::setVerbosity(0); // Keep LHAPDF Silence
     pdf = LHAPDF::mkPDF("MSTW2008lo68cl");
     as_ode.setOrderQCD(5);
     as_ode.setMZ(_MZ);
@@ -329,6 +330,7 @@ double ScalarProduction::CS_pp2SS_STEPBYSTEP(double s, int H1, int H2)
 {
     double mc = ScalarMasses[H1-1];
     double md = ScalarMasses[H2-1];
+    _eta = (H1==H2)?1.0/2.0:1.0;
     gsl_integration_workspace * w = gsl_integration_workspace_alloc(1000);
     double res, err;
 
@@ -341,7 +343,7 @@ double ScalarProduction::CS_pp2SS_STEPBYSTEP(double s, int H1, int H2)
 
     gsl_integration_workspace_free(w);
 
-    return res*GeV2tofb;
+    return _eta*res*GeV2tofb;
 }
 
 typedef struct
@@ -370,7 +372,7 @@ double FINALCS_MC_INTEGRAND(double *X, size_t dim, void * params)
 double ScalarProduction::CS_pp2SS_VEGAS(double s, int H1, int H2)
 {
     double res, err;
-
+    _eta = (H1==H2)?1.0/2.0:1.0;
     double mc = ScalarMasses[H1-1];
     double md = ScalarMasses[H2-1];
     double XL[3] = {mc+md+0.1,0.1,0}; //Mhh, pt, x
@@ -405,12 +407,12 @@ double ScalarProduction::CS_pp2SS_VEGAS(double s, int H1, int H2)
     gsl_monte_vegas_free(vs);
     gsl_rng_free(r);
 
-    return res*GeV2tofb;
+    return _eta*res*GeV2tofb;
 }
 double ScalarProduction::CS_pp2SS_MISER(double s, int H1, int H2)
 {
     double res, err;
-
+    _eta = (H1==H2)?1.0/2.0:1.0;
     double mc = ScalarMasses[H1-1];
     double md = ScalarMasses[H2-1];
     double XL[3] = {mc+md+0.1,0.1,0}; //Mhh, pt, x
@@ -434,5 +436,5 @@ double ScalarProduction::CS_pp2SS_MISER(double s, int H1, int H2)
     gsl_monte_miser_free (vs);
     gsl_rng_free (r);
 
-    return res*GeV2tofb;
+    return _eta*res*GeV2tofb;
 }

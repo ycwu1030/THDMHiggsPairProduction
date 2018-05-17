@@ -8,25 +8,27 @@ SRCDIR := src
 INCDIR := include
 OBJDIR := obj
 CXX = $(LT)/../bin/f++
-FFLAG = -I$(LT)/../include -I$(INCDIR) -I$(THDMC)/../src `gsl-config --cflags` -I$(LHAPDF)/../include 
+FFLAG = -I$(LT)/../include -I$(INCDIR) -I$(THDMC)/../src `gsl-config --cflags` -I$(LHAPDF)/../include
 FLIBS = -L$(LT) -looptools `gsl-config --libs` -L$(THDMC) -l2HDMC -lHB -lHS -L/usr/local/gfortran/lib -lgfortran -L$(LHAPDF) -lLHAPDF
 RPATH = -Xlinker -rpath $(LHAPDF)
 
+INC = $(wildcard $(INCDIR)/*.h)
 SRC = $(wildcard $(SRCDIR)/*.cpp)
 OBJ = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRC))
 
-all: HiggsPairProd.x
+.PRECIOUS: $(OBJ)
+.PHONY: all clean MKOBJDIR
 
-%.x:%.cpp $(OBJ)
-	$(CXX) $(FFLAG) -o $@ $< $(OBJ) $(FLIBS) $(RPATH)
+all: HiggsPairProd.x MKOBJDIR
+
+%.x: %.cpp $(OBJ)
+	$(CXX) $< $(FFLAG) $(OBJ) $(FLIBS) $(RPATH) -o $@
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(INC)
+	$(CXX) $(FFLAG) -c $< -o $@
 
 MKOBJDIR:
 	@mkdir -p $(OBJDIR)
-
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp MKOBJDIR
-	$(CXX) $(FFLAG) -c $< -o $@
-
-.PHONY: clean
 
 clean:
 	rm -f *.x
