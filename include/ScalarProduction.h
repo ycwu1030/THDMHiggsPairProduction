@@ -36,9 +36,15 @@ public:
     double CS_pp2SS_MISER(double s, int H1, int H2);
     double CS_pp2SS_VEGAS(double s, int H1, int H2);
     double CS_pp2SS_STEPBYSTEP(double s, int H1, int H2);
+    double CS_pp2SS_MISERFROMCTHETA(double s, int H1, int H2);
+    double CS_pp2SS_VEGASFROMCTHETA(double s, int H1, int H2);
+    double CS_pp2SS_STEPBYSTEPFROMCTHETA(double s, int H1, int H2);
     double CS_pp2SS_HCUBATURE(double s,int H1, int H2);
     double CS_pp2SS_PCUBATURE(double s,int H1, int H2);
-    double CS_pp2SS_CUBAVEGAS(double s,int H1, int H2, CUBAINTEGRATOR Choice);
+    double CS_pp2SS_HCUBATUREFROMCTHETA(double s,int H1, int H2);
+    double CS_pp2SS_PCUBATUREFROMCTHETA(double s,int H1, int H2);
+    double CS_pp2SS_CUBA(double s,int H1, int H2, CUBAINTEGRATOR Choice);
+    double CS_pp2SS_CUBAFROMCTHETA(double s,int H1, int H2, CUBAINTEGRATOR Choice);
 
 
 // private:
@@ -80,8 +86,10 @@ public:
 
     double dSigmahatgg2SSdthatGeneral(double shat, double that, int H1, int H2);
     double dSigmahatgg2SSdptGeneral(double shat, double pt, int H1, int H2);
+    double dSigmahatgg2SSdCthetaGeneral(double shat, double ctheta, int H1, int H2);
     double PARTONINTEGRAL(double mhh, double S);
     double Sigmagg2SSGeneral(double shat,int H1,int H2);
+    double Sigmagg2SSGeneralFromCtheta(double shat,int H1,int H2);
 };
 
 #endif

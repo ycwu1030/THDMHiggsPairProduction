@@ -71,6 +71,8 @@
 #define Tan(i) tan(i)
 #define Cot(i) (1/tan(i))
 
+#define GSLCALLS 50000
+
 //--- CUBA VARIABLES
 #define NDIM 3
 #define NCOMP 1

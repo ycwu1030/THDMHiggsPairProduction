@@ -246,6 +246,15 @@ double ScalarProduction::dSigmahatgg2SSdptGeneral(double shat, double pt, int H1
     double Jacobi = 2.0*pt*shat/(sqrt(lam-4*shat*pt*pt));
     return Jacobi*dSigmahatgg2SSdthatGeneral(shat,that,H1,H2);
 }
+double ScalarProduction::dSigmahatgg2SSdCthetaGeneral(double shat, double ctheta, int H1, int H2)
+{
+    double mc = ScalarMasses[H1-1];
+    double md = ScalarMasses[H2-1];
+    double lam = lambda(shat,mc*mc,md*md);
+    double that = (pow(mc,2)+pow(md,2))/2.0 - shat/2 + 1.0/2.0*sqrt(lam)*ctheta;
+    double Jacobi = 1.0/2.0*sqrt(lam);
+    return Jacobi*dSigmahatgg2SSdthatGeneral(shat,that,H1,H2);
+}
 
 typedef struct
 {
@@ -315,6 +324,31 @@ double ScalarProduction::Sigmagg2SSGeneral(double shat,int H1,int H2)
     return res;
 }
 
+double PARTONCSFROMCTHETA_QAGS_INTEGRAND(double X, void * params)
+{
+    PARTONCS_QAGSPARAMS* fp = (PARTONCS_QAGSPARAMS*) params;
+    return fp->sp->dSigmahatgg2SSdCthetaGeneral(fp->shat, X, fp->H1, fp->H2);
+}
+double ScalarProduction::Sigmagg2SSGeneralFromCtheta(double shat,int H1,int H2)
+{
+    double mc = ScalarMasses[H1-1];
+    double md = ScalarMasses[H2-1];
+    double lam = lambda(shat,mc*mc,md*md);
+    gsl_integration_workspace * w = gsl_integration_workspace_alloc(1000);
+    double res, err;
+
+    PARTONCS_QAGSPARAMS fp = {shat,H1,H2,this};
+    gsl_function F;
+    F.function=&PARTONCSFROMCTHETA_QAGS_INTEGRAND;
+    F.params = &fp;
+
+    gsl_integration_qags(&F,-1,1,0,1e-3,1000,w,&res,&err);
+
+    gsl_integration_workspace_free(w);
+
+    return res;
+}
+
 typedef struct
 {
    double s;
@@ -329,6 +363,7 @@ double FINALCS_QAGS_INTEGRAND(double X, void * params)
 }
 double ScalarProduction::CS_pp2SS_STEPBYSTEP(double s, int H1, int H2)
 {
+    _eta = (H1==H2)?1.0:2.0;
     double mc = ScalarMasses[H1-1];
     double md = ScalarMasses[H2-1];
     _eta = (H1==H2)?1.0:2.0;
@@ -338,6 +373,31 @@ double ScalarProduction::CS_pp2SS_STEPBYSTEP(double s, int H1, int H2)
     FINALCS_QAGSPARAMS fp = {s,H1,H2,this};
     gsl_function F;
     F.function=&FINALCS_QAGS_INTEGRAND;
+    F.params = &fp;
+
+    gsl_integration_qags(&F,mc+md+0.1,sqrt(s),0,1e-3,1000,w,&res,&err);
+
+    gsl_integration_workspace_free(w);
+
+    return _eta*res*GeV2tofb;
+}
+
+double FINALCSFROMCTHETA_QAGS_INTEGRAND(double X, void * params)
+{
+    FINALCS_QAGSPARAMS* fp = (FINALCS_QAGSPARAMS*) params;
+    return fp->sp->PARTONINTEGRAL(X, fp->s)*fp->sp->Sigmagg2SSGeneralFromCtheta(X*X,fp->H1,fp->H2);
+}
+double ScalarProduction::CS_pp2SS_STEPBYSTEPFROMCTHETA(double s, int H1, int H2)
+{
+    _eta = (H1==H2)?1.0/2.0:1.0;
+    double mc = ScalarMasses[H1-1];
+    double md = ScalarMasses[H2-1];
+    gsl_integration_workspace * w = gsl_integration_workspace_alloc(1000);
+    double res, err;
+
+    FINALCS_QAGSPARAMS fp = {s,H1,H2,this};
+    gsl_function F;
+    F.function=&FINALCSFROMCTHETA_QAGS_INTEGRAND;
     F.params = &fp;
 
     gsl_integration_qags(&F,mc+md+0.1,sqrt(s),0,1e-3,1000,w,&res,&err);
@@ -372,6 +432,7 @@ double FINALCS_MC_INTEGRAND(double *X, size_t dim, void * params)
 }
 double ScalarProduction::CS_pp2SS_VEGAS(double s, int H1, int H2)
 {
+    _eta = (H1==H2)?1.0:2.0;
     double res, err;
     _eta = (H1==H2)?1.0:2.0;
     double mc = ScalarMasses[H1-1];
@@ -385,7 +446,7 @@ double ScalarProduction::CS_pp2SS_VEGAS(double s, int H1, int H2)
     FINALCS_MCPARAMS fp = {s,H1,H2,this};
     gsl_monte_function G = {&FINALCS_MC_INTEGRAND, 3, &fp};
 
-    size_t calls = 10000;
+    size_t calls = GSLCALLS;
     gsl_rng_env_setup();
 
     T = gsl_rng_default;
@@ -397,13 +458,13 @@ double ScalarProduction::CS_pp2SS_VEGAS(double s, int H1, int H2)
     int tries = 0;
     do
       {
-        gsl_monte_vegas_integrate (&G, XL, XU, 3, calls, r, vs,
+        gsl_monte_vegas_integrate (&G, XL, XU, 3, calls/5, r, vs,
                                    &res, &err);
         // printf ("result = % .6f sigma = % .6f "
                 // "chisq/dof = %.1f\n", res, err, gsl_monte_vegas_chisq (s));
         tries++;
       }
-    while (fabs (gsl_monte_vegas_chisq (vs) - 1.0) > 0.2||tries<15);
+    while (fabs (gsl_monte_vegas_chisq (vs) - 1.0) > 0.2 && tries<15);
 
     gsl_monte_vegas_free(vs);
     gsl_rng_free(r);
@@ -412,6 +473,7 @@ double ScalarProduction::CS_pp2SS_VEGAS(double s, int H1, int H2)
 }
 double ScalarProduction::CS_pp2SS_MISER(double s, int H1, int H2)
 {
+    _eta = (H1==H2)?1.0:2.0;
     double res, err;
     _eta = (H1==H2)?1.0:2.0;
     double mc = ScalarMasses[H1-1];
@@ -425,7 +487,95 @@ double ScalarProduction::CS_pp2SS_MISER(double s, int H1, int H2)
     FINALCS_MCPARAMS fp = {s,H1,H2,this};
     gsl_monte_function G = {&FINALCS_MC_INTEGRAND, 3, &fp};
 
-    size_t calls = 20000;
+    size_t calls = GSLCALLS;
+    gsl_rng_env_setup();
+
+    T = gsl_rng_default;
+    r = gsl_rng_alloc(T);
+
+    gsl_monte_miser_state *vs = gsl_monte_miser_alloc (3);
+    gsl_monte_miser_integrate (&G, XL, XU, 3, calls, r, vs,
+                               &res, &err);
+    gsl_monte_miser_free (vs);
+    gsl_rng_free (r);
+
+    return _eta*res*GeV2tofb;
+}
+
+double FINALCSFROMCTHETA_MC_INTEGRAND(double *X, size_t dim, void * params)
+{
+// X[0] Mhh 
+// X[1] CTHETA
+// X[2] x
+    FINALCS_MCPARAMS *fp = (FINALCS_MCPARAMS*) params;
+    double shat = X[0]*X[0];
+    double tau = shat/fp->s;
+    if (X[2]>1||X[2]<tau)
+    {
+        return 0;
+    }
+    double pdf1 = fp->sp->pdf->xfxQ2(21,X[2],shat);
+    double pdf2 = fp->sp->pdf->xfxQ2(21,tau/X[2],shat);
+    return (1.0/X[2]*(pdf1/X[2])*(pdf2/(tau/X[2]))*2*X[0]/fp->s)*(fp->sp->dSigmahatgg2SSdCthetaGeneral(shat, X[1], fp->H1, fp->H2));
+}
+double ScalarProduction::CS_pp2SS_VEGASFROMCTHETA(double s, int H1, int H2)
+{
+    _eta = (H1==H2)?1.0/2.0:1.0;
+    double res, err;
+
+    double mc = ScalarMasses[H1-1];
+    double md = ScalarMasses[H2-1];
+    double XL[3] = {mc+md+0.1,-1,0}; //Mhh, ctheta, x
+    double XU[3] = {sqrt(s)-0.1,1,1};
+
+    const gsl_rng_type *T;
+    gsl_rng *r;
+
+    FINALCS_MCPARAMS fp = {s,H1,H2,this};
+    gsl_monte_function G = {&FINALCSFROMCTHETA_MC_INTEGRAND, 3, &fp};
+
+    size_t calls = GSLCALLS;
+    gsl_rng_env_setup();
+
+    T = gsl_rng_default;
+    r = gsl_rng_alloc(T);
+
+    gsl_monte_vegas_state *vs = gsl_monte_vegas_alloc(3);
+
+    gsl_monte_vegas_integrate(&G,XL,XU,3,calls/5,r,vs,&res,&err);
+    int tries = 0;
+    do
+      {
+        gsl_monte_vegas_integrate (&G, XL, XU, 3, calls, r, vs,
+                                   &res, &err);
+        // printf ("result = % .6f sigma = % .6f "
+                // "chisq/dof = %.1f\n", res, err, gsl_monte_vegas_chisq (s));
+        tries++;
+      }
+    while (fabs (gsl_monte_vegas_chisq (vs) - 1.0) > 0.2&&tries<15);
+
+    gsl_monte_vegas_free(vs);
+    gsl_rng_free(r);
+
+    return _eta*res*GeV2tofb;
+}
+double ScalarProduction::CS_pp2SS_MISERFROMCTHETA(double s, int H1, int H2)
+{
+    _eta = (H1==H2)?1.0/2.0:1.0;
+    double res, err;
+
+    double mc = ScalarMasses[H1-1];
+    double md = ScalarMasses[H2-1];
+    double XL[3] = {mc+md+0.1,-1,0}; //Mhh, ctheta, x
+    double XU[3] = {sqrt(s)-0.1,1,1};
+
+    const gsl_rng_type *T;
+    gsl_rng *r;
+
+    FINALCS_MCPARAMS fp = {s,H1,H2,this};
+    gsl_monte_function G = {&FINALCSFROMCTHETA_MC_INTEGRAND, 3, &fp};
+
+    size_t calls = GSLCALLS;
     gsl_rng_env_setup();
 
     T = gsl_rng_default;
@@ -447,7 +597,7 @@ int CUBATURE_INTEGRAND(unsigned ndim, const double *X, void *fdata, unsigned fdi
     double tau = shat/fp->s;
     if (X[2]>1||X[2]<tau)
     {
-        fval = 0;
+        fval[0] = 0;
         return 0;
     }
     double pdf1 = fp->sp->pdf->xfxQ2(21,X[2],shat);
@@ -459,7 +609,7 @@ int CUBATURE_INTEGRAND(unsigned ndim, const double *X, void *fdata, unsigned fdi
 double ScalarProduction::CS_pp2SS_HCUBATURE(double s,int H1, int H2)
 {
     double res[2], err;
-
+    _eta = (H1==H2)?1.0:2.0;
     double mc = ScalarMasses[H1-1];
     double md = ScalarMasses[H2-1];
     double XL[3] = {mc+md+0.1,0.1,0}; //Mhh, pt, x
@@ -467,12 +617,12 @@ double ScalarProduction::CS_pp2SS_HCUBATURE(double s,int H1, int H2)
     FINALCS_MCPARAMS fp = {s,H1,H2,this};
 
     hcubature(1,CUBATURE_INTEGRAND,&fp,3,XL,XU,0,0.001,0.001,ERROR_INDIVIDUAL,res,&err);
-    return res[0];
+    return _eta*res[0];
 }
 double ScalarProduction::CS_pp2SS_PCUBATURE(double s,int H1, int H2)
 {
     double res[2], err;
-
+    _eta = (H1==H2)?1.0:2.0;
     double mc = ScalarMasses[H1-1];
     double md = ScalarMasses[H2-1];
     double XL[3] = {mc+md+0.1,0.1,0}; //Mhh, pt, x
@@ -480,7 +630,50 @@ double ScalarProduction::CS_pp2SS_PCUBATURE(double s,int H1, int H2)
     FINALCS_MCPARAMS fp = {s,H1,H2,this};
 
     pcubature(1,CUBATURE_INTEGRAND,&fp,3,XL,XU,0,0.001,0.001,ERROR_INDIVIDUAL,res,&err);
-    return res[0];
+    return _eta*res[0];
+}
+
+int CUBATUREFROMCTHETA_INTEGRAND(unsigned ndim, const double *X, void *fdata, unsigned fdim,double *fval)
+{
+    FINALCS_MCPARAMS *fp = (FINALCS_MCPARAMS*) fdata;
+    double shat = X[0]*X[0];
+    double tau = shat/fp->s;
+    if (X[2]>1||X[2]<tau)
+    {
+        fval[0] = 0;
+        return 0;
+    }
+    double pdf1 = fp->sp->pdf->xfxQ2(21,X[2],shat);
+    double pdf2 = fp->sp->pdf->xfxQ2(21,tau/X[2],shat);
+    fval[0]=fp->sp->GeV2tofb*(1.0/X[2]*(pdf1/X[2])*(pdf2/(tau/X[2]))*2*X[0]/fp->s)*(fp->sp->dSigmahatgg2SSdCthetaGeneral(shat, X[1], fp->H1, fp->H2));
+    return 0;
+}
+
+double ScalarProduction::CS_pp2SS_HCUBATUREFROMCTHETA(double s,int H1, int H2)
+{
+    double res[2], err;
+    _eta = (H1==H2)?1.0/2.0:1.0;
+    double mc = ScalarMasses[H1-1];
+    double md = ScalarMasses[H2-1];
+    double XL[3] = {mc+md+0.1,-1,0}; //Mhh, ctheta, x
+    double XU[3] = {sqrt(s)-0.1,1,1};
+    FINALCS_MCPARAMS fp = {s,H1,H2,this};
+
+    hcubature(1,CUBATUREFROMCTHETA_INTEGRAND,&fp,3,XL,XU,0,0.001,0.001,ERROR_INDIVIDUAL,res,&err);
+    return _eta*res[0];
+}
+double ScalarProduction::CS_pp2SS_PCUBATUREFROMCTHETA(double s,int H1, int H2)
+{
+    double res[2], err;
+    _eta = (H1==H2)?1.0/2.0:1.0;
+    double mc = ScalarMasses[H1-1];
+    double md = ScalarMasses[H2-1];
+    double XL[3] = {mc+md+0.1,-1,0}; //Mhh, ctheta, x
+    double XU[3] = {sqrt(s)-0.1,1,1};
+    FINALCS_MCPARAMS fp = {s,H1,H2,this};
+
+    pcubature(1,CUBATUREFROMCTHETA_INTEGRAND,&fp,3,XL,XU,0,0.001,0.001,ERROR_INDIVIDUAL,res,&err);
+    return _eta*res[0];
 }
 
 int CUBA_INTEGRAND(const int *ndim, const cubareal xx[], const int *ncomp, cubareal ff[], void *userdata)
@@ -508,11 +701,12 @@ int CUBA_INTEGRAND(const int *ndim, const cubareal xx[], const int *ncomp, cubar
     ff[0] = fp->sp->GeV2tofb*(sqrt(fp->s)-0.1-mc-md-0.1)*(sqrt(fp->s)/2-0.1-0.1)*(1.0/X[2]*(pdf1/X[2])*(pdf2/(tau/X[2]))*2*X[0]/fp->s)*(fp->sp->dSigmahatgg2SSdptGeneral(shat, X[1], fp->H1, fp->H2));
     return 0;
 }
-double ScalarProduction::CS_pp2SS_CUBAVEGAS(double s,int H1, int H2, CUBAINTEGRATOR Choice)
+double ScalarProduction::CS_pp2SS_CUBA(double s,int H1, int H2, CUBAINTEGRATOR Choice)
 {
     int comp, nregions, neval, fail;
     cubareal integral[NCOMP], error[NCOMP], prob[NCOMP];
     FINALCS_MCPARAMS fp = {s,H1,H2,this};
+    _eta = (H1==H2)?1.0:2.0;
     switch(Choice){
         case VEGAS: Vegas(3, 1, CUBA_INTEGRAND, &fp, NVEC,
                             EPSREL, EPSABS, VERBOSE, SEED,
@@ -542,5 +736,68 @@ double ScalarProduction::CS_pp2SS_CUBAVEGAS(double s,int H1, int H2, CUBAINTEGRA
                             GRIDNO, STATEFILE, SPIN,
                             &neval, &fail, integral, error, prob); break;
     }
-    return (fail==0)?integral[0]:-1*integral[0];
+    return (fail==0)?_eta*integral[0]:-1*_eta*integral[0];
+}
+
+int CUBAFROMCTHETA_INTEGRAND(const int *ndim, const cubareal xx[], const int *ncomp, cubareal ff[], void *userdata)
+{
+// X[0] Mhh 
+// X[1] ctheta
+// X[2] x
+    double X[3];
+    FINALCS_MCPARAMS *fp = (FINALCS_MCPARAMS*) userdata;
+    double mc = fp->sp->ScalarMasses[fp->H1-1];
+    double md = fp->sp->ScalarMasses[fp->H2-2];
+// CUBA INTEGRAL in unit-cubic, so need to change the variables
+    X[0] = xx[0]*(sqrt(fp->s)-0.1-mc-md-0.1)+mc+md+0.1;
+    X[1] = xx[1]*2.0-1.0;
+    X[2] = xx[2];
+    double shat = X[0]*X[0];
+    double tau = shat/fp->s;
+    if (X[2]>1||X[2]<tau)
+    {
+        ff[0] = 0;
+        return 0;
+    }
+    double pdf1 = fp->sp->pdf->xfxQ2(21,X[2],shat);
+    double pdf2 = fp->sp->pdf->xfxQ2(21,tau/X[2],shat);
+    ff[0] = fp->sp->GeV2tofb*(sqrt(fp->s)-0.1-mc-md-0.1)*2.0*(1.0/X[2]*(pdf1/X[2])*(pdf2/(tau/X[2]))*2*X[0]/fp->s)*(fp->sp->dSigmahatgg2SSdCthetaGeneral(shat, X[1], fp->H1, fp->H2));
+    return 0;
+}
+double ScalarProduction::CS_pp2SS_CUBAFROMCTHETA(double s,int H1, int H2, CUBAINTEGRATOR Choice)
+{
+    int comp, nregions, neval, fail;
+    cubareal integral[NCOMP], error[NCOMP], prob[NCOMP];
+    FINALCS_MCPARAMS fp = {s,H1,H2,this};
+    _eta = (H1==H2)?1.0/2.0:1.0;
+    switch(Choice){
+        case VEGAS: Vegas(3, 1, CUBAFROMCTHETA_INTEGRAND, &fp, NVEC,
+                            EPSREL, EPSABS, VERBOSE, SEED,
+                            MINEVAL, MAXEVAL, NSTART, NINCREASE, NBATCH,
+                            GRIDNO, STATEFILE, SPIN,
+                            &neval, &fail, integral, error, prob); break;
+        case SUAVE: Suave(3, 1, CUBAFROMCTHETA_INTEGRAND, &fp, NVEC,
+                                EPSREL, EPSABS, VERBOSE | LAST, SEED,
+                                MINEVAL, MAXEVAL, NNEW, NMIN, FLATNESS,
+                                STATEFILE, SPIN,
+                                &nregions, &neval, &fail, integral, error, prob); break;
+        case DIVONNE: Divonne(3, 1, CUBAFROMCTHETA_INTEGRAND, &fp, NVEC,
+                        EPSREL, EPSABS, VERBOSE, SEED,
+                        MINEVAL, MAXEVAL, KEY1, KEY2, KEY3, MAXPASS,
+                        BORDER, MAXCHISQ, MINDEVIATION,
+                        NGIVEN, LDXGIVEN, NULL, NEXTRA, NULL,
+                        STATEFILE, SPIN,
+                        &nregions, &neval, &fail, integral, error, prob); break;
+        case CUHRE: Cuhre(3, 1, CUBAFROMCTHETA_INTEGRAND, &fp, NVEC,
+                        EPSREL, EPSABS, VERBOSE | LAST,
+                        MINEVAL, MAXEVAL, KEY,
+                        STATEFILE, SPIN,
+                        &nregions, &neval, &fail, integral, error, prob);break;
+        default: Vegas(3, 1, CUBAFROMCTHETA_INTEGRAND, &fp, NVEC,
+                            EPSREL, EPSABS, VERBOSE, SEED,
+                            MINEVAL, MAXEVAL, NSTART, NINCREASE, NBATCH,
+                            GRIDNO, STATEFILE, SPIN,
+                            &neval, &fail, integral, error, prob); break;
+    }
+    return (fail==0)?_eta*integral[0]:-1*_eta*integral[0];
 }
