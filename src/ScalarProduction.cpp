@@ -77,6 +77,19 @@ bool ScalarProduction::Set_THDM_Params(double mH, double mA, double mHc, double 
     ScalarMasses[1] = _mHH;
     ScalarMasses[2] = _mA;
     ScalarMasses[3] = _mHc;
+// Reason for following:
+// In 2HDMC, the range of alpha is picked by -pi/2 < beta - alpha < pi/2
+// This means sin(beta-alpha) in [-1,1] and cos(beta-alpha) in [0,1]
+// However, we want to scan the region where cos(beta-alpha) in [-1,1]
+// Thus we want to have beta - alpha in [0, pi]
+// Here, we use a trick that if we add a pi on alpha, physics will not change
+// So for those alpha and beta satisfy beta - alpha in [0, pi/2], we will do nothing
+// But for those alpha and beta with beta - alpha in [pi/2, pi] (in our own case), 
+// we will add PI on alpha to match the range used in 2HDMC
+    if (_alpha < _beta - PI/2.0)
+    {
+        _alpha += PI;
+    }
     bool pset = _mod.set_param_phys(Mh, _mHH, _mA, _mHc,
                       sin(_beta-_alpha),0,0,
                       _m122, tan(_beta));
@@ -366,7 +379,6 @@ double ScalarProduction::CS_pp2SS_STEPBYSTEP(double s, int H1, int H2)
     _eta = (H1==H2)?1.0:2.0;
     double mc = ScalarMasses[H1-1];
     double md = ScalarMasses[H2-1];
-    _eta = (H1==H2)?1.0:2.0;
     gsl_integration_workspace * w = gsl_integration_workspace_alloc(1000);
     double res, err;
 
@@ -434,7 +446,6 @@ double ScalarProduction::CS_pp2SS_VEGAS(double s, int H1, int H2)
 {
     _eta = (H1==H2)?1.0:2.0;
     double res, err;
-    _eta = (H1==H2)?1.0:2.0;
     double mc = ScalarMasses[H1-1];
     double md = ScalarMasses[H2-1];
     double XL[3] = {mc+md+0.1,0.1,0}; //Mhh, pt, x
@@ -475,7 +486,6 @@ double ScalarProduction::CS_pp2SS_MISER(double s, int H1, int H2)
 {
     _eta = (H1==H2)?1.0:2.0;
     double res, err;
-    _eta = (H1==H2)?1.0:2.0;
     double mc = ScalarMasses[H1-1];
     double md = ScalarMasses[H2-1];
     double XL[3] = {mc+md+0.1,0.1,0}; //Mhh, pt, x

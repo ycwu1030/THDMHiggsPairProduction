@@ -14,7 +14,7 @@ int main(int argc, char const *argv[])
     ltini();
     ScalarProduction sp;
     sp.Set_Yukawa_Type(1);
-    double mphi = 200;
+    double mphi = 400;
     double cba = 0.1;
     double tb = 1;
     double beta = atan(tb);
