@@ -330,7 +330,7 @@ double ScalarProduction::CS_pp2SS_STEPBYSTEP(double s, int H1, int H2)
 {
     double mc = ScalarMasses[H1-1];
     double md = ScalarMasses[H2-1];
-    _eta = (H1==H2)?1.0/2.0:1.0;
+    _eta = (H1==H2)?1.0:2.0;
     gsl_integration_workspace * w = gsl_integration_workspace_alloc(1000);
     double res, err;
 
@@ -372,7 +372,7 @@ double FINALCS_MC_INTEGRAND(double *X, size_t dim, void * params)
 double ScalarProduction::CS_pp2SS_VEGAS(double s, int H1, int H2)
 {
     double res, err;
-    _eta = (H1==H2)?1.0/2.0:1.0;
+    _eta = (H1==H2)?1.0:2.0;
     double mc = ScalarMasses[H1-1];
     double md = ScalarMasses[H2-1];
     double XL[3] = {mc+md+0.1,0.1,0}; //Mhh, pt, x
@@ -412,7 +412,7 @@ double ScalarProduction::CS_pp2SS_VEGAS(double s, int H1, int H2)
 double ScalarProduction::CS_pp2SS_MISER(double s, int H1, int H2)
 {
     double res, err;
-    _eta = (H1==H2)?1.0/2.0:1.0;
+    _eta = (H1==H2)?1.0:2.0;
     double mc = ScalarMasses[H1-1];
     double md = ScalarMasses[H2-1];
     double XL[3] = {mc+md+0.1,0.1,0}; //Mhh, pt, x
