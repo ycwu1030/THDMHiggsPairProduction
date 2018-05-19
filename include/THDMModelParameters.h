@@ -83,7 +83,7 @@
 #define LAST 4
 #define SEED 0
 #define MINEVAL 0
-#define MAXEVAL 500000
+#define MAXEVAL 5000000
 
 #define NSTART 2000
 #define NINCREASE 500
@@ -94,7 +94,7 @@
 
 #define NNEW 1000
 #define NMIN 2
-#define FLATNESS 25.
+#define FLATNESS 10.
 
 #define KEY1 47
 #define KEY2 1
