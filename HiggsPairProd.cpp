@@ -19,7 +19,7 @@ int main(int argc, char const *argv[])
     double tb = 1;
     double beta = atan(tb);
     double alpha = beta - acos(cba);
-    for (double m12 = 0; m12<= 200; m12+=20)
+    for (double m12 = 0; m12<= 40; m12+=20)
     {
     cout<<"<<<<<<<<<<  m122 = "<<m12<<"<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"<<endl;
         sp.Set_THDM_Params(mphi,mphi,mphi,alpha,beta,m12*m12);
@@ -44,22 +44,6 @@ int main(int argc, char const *argv[])
     // cout<<"  PCUBATURE: "<<sp.CS_pp2SS_PCUBATURE(14000*14000,1,1)<<endl;
     // T2=clock();
     // cout<<"       TIME CONSUMING: "<<(double)(T2-T1)/CLOCKS_PER_SEC<<endl;
-    // T1=clock();
-    // cout<<"  CUBA VEGAS: "<<sp.CS_pp2SS_CUBA(14000*14000,1,1,VEGAS)<<endl;
-    // T2=clock();
-    // cout<<"       TIME CONSUMING: "<<(double)(T2-T1)/CLOCKS_PER_SEC<<endl;
-    T1=clock();
-    cout<<"  CUBA SUAVE: "<<sp.CS_pp2SS_CUBA(14000*14000,1,1,SUAVE)<<endl;
-    T2=clock();
-    cout<<"       TIME CONSUMING: "<<(double)(T2-T1)/CLOCKS_PER_SEC<<endl;
-    // T1=clock();
-    // cout<<"  CUBA DIVONNE: "<<sp.CS_pp2SS_CUBA(14000*14000,1,1,DIVONNE)<<endl;
-    // T2=clock();
-    // cout<<"       TIME CONSUMING: "<<(double)(T2-T1)/CLOCKS_PER_SEC<<endl;
-    // T1=clock();
-    // cout<<"  CUBA CUHRE: "<<sp.CS_pp2SS_CUBA(14000*14000,1,1,CUHRE)<<endl;
-    // T2=clock();
-    // cout<<"       TIME CONSUMING: "<<(double)(T2-T1)/CLOCKS_PER_SEC<<endl;
     cout<<"Cross Section calculation Using ctheta: "<<endl;
     T1=clock();
     cout<<"  STEP BY STEP: "<<sp.CS_pp2SS_STEPBYSTEPFROMCTHETA(14000*14000,1,1)<<endl;
@@ -81,22 +65,6 @@ int main(int argc, char const *argv[])
     // cout<<"  PCUBATURE: "<<sp.CS_pp2SS_PCUBATUREFROMCTHETA(14000*14000,1,1)<<endl;
     // T2=clock();
     // cout<<"       TIME CONSUMING: "<<(double)(T2-T1)/CLOCKS_PER_SEC<<endl;
-    // T1=clock(); time(&start);
-    // cout<<"  CUBA VEGAS: "<<sp.CS_pp2SS_CUBAFROMCTHETA(14000*14000,1,1,VEGAS)<<endl;
-    // T2=clock(); time(&end);
-    // cout<<"       TIME CONSUMING: "<<(double)(T2-T1)/CLOCKS_PER_SEC<<"  "<<end-start<<endl;
-    T1=clock(); time(&start);
-    cout<<"  CUBA SUAVE: "<<sp.CS_pp2SS_CUBAFROMCTHETA(14000*14000,1,1,SUAVE)<<endl;
-    T2=clock(); time(&end);
-    cout<<"       TIME CONSUMING: "<<(double)(T2-T1)/CLOCKS_PER_SEC<<"  "<<end-start<<endl;
-    // T1=clock();
-    // cout<<"  CUBA DIVONNE: "<<sp.CS_pp2SS_CUBAFROMCTHETA(14000*14000,1,1,DIVONNE)<<endl;
-    // T2=clock();
-    // cout<<"       TIME CONSUMING: "<<(double)(T2-T1)/CLOCKS_PER_SEC<<endl;
-    // T1=clock(); time(&start);
-    // cout<<"  CUBA CUHRE: "<<sp.CS_pp2SS_CUBAFROMCTHETA(14000*14000,1,1,CUHRE)<<endl;
-    // T2=clock(); time(&end);
-    // cout<<"       TIME CONSUMING: "<<(double)(T2-T1)/CLOCKS_PER_SEC<<"  "<<end-start<<endl;
     cout<<">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"<<endl;
 }
     ltexi();

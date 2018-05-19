@@ -4,7 +4,6 @@
 #include "THDMModelParameters.h"
 #include "Loopfuncs.h"
 #include "cubature.h"
-#include "cuba.h" // The Cuba Library
 // Using 2HDMC for calculating the model parameters
 #include "THDM.h"
 #include "DecayTable.h"
@@ -15,14 +14,6 @@
 #include <gsl/gsl_integration.h>
 #include "LHAPDF/LHAPDF.h"
 
-enum CUBAINTEGRATOR
-{
-    VEGAS = 0,
-    SUAVE = 1,
-    DIVONNE = 2,
-    CUHRE = 3
-};
-
 class ScalarProduction
 {
 public:
@@ -31,7 +22,7 @@ public:
 
     void Set_Yukawa_Type(int type);
     bool Set_THDM_Params(double mH, double mA, double mHc, double alpha, double beta, double m122); // For Physics basis, not considering lambda6 and lambda7
-    //Note that in 2HDMC, the convention is -1<=sba<=1, and cba>=0;
+
     void Set_PDFSet(std::string pdfname);
     double CS_pp2SS_MISER(double s, int H1, int H2);
     double CS_pp2SS_VEGAS(double s, int H1, int H2);
@@ -43,8 +34,6 @@ public:
     double CS_pp2SS_PCUBATURE(double s,int H1, int H2);
     double CS_pp2SS_HCUBATUREFROMCTHETA(double s,int H1, int H2);
     double CS_pp2SS_PCUBATUREFROMCTHETA(double s,int H1, int H2);
-    double CS_pp2SS_CUBA(double s,int H1, int H2, CUBAINTEGRATOR Choice);
-    double CS_pp2SS_CUBAFROMCTHETA(double s,int H1, int H2, CUBAINTEGRATOR Choice);
 
 
 // private:
