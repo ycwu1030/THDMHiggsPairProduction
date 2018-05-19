@@ -31,9 +31,7 @@ public:
     double CS_pp2SS_VEGASFROMCTHETA(double s, int H1, int H2);
     double CS_pp2SS_STEPBYSTEPFROMCTHETA(double s, int H1, int H2);
     double CS_pp2SS_HCUBATURE(double s,int H1, int H2);
-    double CS_pp2SS_PCUBATURE(double s,int H1, int H2);
     double CS_pp2SS_HCUBATUREFROMCTHETA(double s,int H1, int H2);
-    double CS_pp2SS_PCUBATUREFROMCTHETA(double s,int H1, int H2);
 
 
 // private:

@@ -629,19 +629,6 @@ double ScalarProduction::CS_pp2SS_HCUBATURE(double s,int H1, int H2)
     hcubature(1,CUBATURE_INTEGRAND,&fp,3,XL,XU,0,0.001,0.001,ERROR_INDIVIDUAL,res,&err);
     return _eta*res[0];
 }
-double ScalarProduction::CS_pp2SS_PCUBATURE(double s,int H1, int H2)
-{
-    double res[2], err;
-    _eta = (H1==H2)?1.0:2.0;
-    double mc = ScalarMasses[H1-1];
-    double md = ScalarMasses[H2-1];
-    double XL[3] = {mc+md+0.1,0.1,0}; //Mhh, pt, x
-    double XU[3] = {sqrt(s)-0.1,sqrt(s)/2-0.1,1};
-    FINALCS_MCPARAMS fp = {s,H1,H2,this};
-
-    pcubature(1,CUBATURE_INTEGRAND,&fp,3,XL,XU,0,0.001,0.001,ERROR_INDIVIDUAL,res,&err);
-    return _eta*res[0];
-}
 
 int CUBATUREFROMCTHETA_INTEGRAND(unsigned ndim, const double *X, void *fdata, unsigned fdim,double *fval)
 {
@@ -670,18 +657,5 @@ double ScalarProduction::CS_pp2SS_HCUBATUREFROMCTHETA(double s,int H1, int H2)
     FINALCS_MCPARAMS fp = {s,H1,H2,this};
 
     hcubature(1,CUBATUREFROMCTHETA_INTEGRAND,&fp,3,XL,XU,0,0.001,0.001,ERROR_INDIVIDUAL,res,&err);
-    return _eta*res[0];
-}
-double ScalarProduction::CS_pp2SS_PCUBATUREFROMCTHETA(double s,int H1, int H2)
-{
-    double res[2], err;
-    _eta = (H1==H2)?1.0/2.0:1.0;
-    double mc = ScalarMasses[H1-1];
-    double md = ScalarMasses[H2-1];
-    double XL[3] = {mc+md+0.1,-1,0}; //Mhh, ctheta, x
-    double XU[3] = {sqrt(s)-0.1,1,1};
-    FINALCS_MCPARAMS fp = {s,H1,H2,this};
-
-    pcubature(1,CUBATUREFROMCTHETA_INTEGRAND,&fp,3,XL,XU,0,0.001,0.001,ERROR_INDIVIDUAL,res,&err);
     return _eta*res[0];
 }

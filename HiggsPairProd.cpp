@@ -40,10 +40,6 @@ int main(int argc, char const *argv[])
     // cout<<"  HCUBATURE: "<<sp.CS_pp2SS_HCUBATURE(14000*14000,1,1)<<endl;
     // T2=clock();
     // cout<<"       TIME CONSUMING: "<<(double)(T2-T1)/CLOCKS_PER_SEC<<endl;
-    // T1=clock();
-    // cout<<"  PCUBATURE: "<<sp.CS_pp2SS_PCUBATURE(14000*14000,1,1)<<endl;
-    // T2=clock();
-    // cout<<"       TIME CONSUMING: "<<(double)(T2-T1)/CLOCKS_PER_SEC<<endl;
     cout<<"Cross Section calculation Using ctheta: "<<endl;
     T1=clock();
     cout<<"  STEP BY STEP: "<<sp.CS_pp2SS_STEPBYSTEPFROMCTHETA(14000*14000,1,1)<<endl;
@@ -61,10 +57,6 @@ int main(int argc, char const *argv[])
     cout<<"  HCUBATURE: "<<sp.CS_pp2SS_HCUBATUREFROMCTHETA(14000*14000,1,1)<<endl;
     T2=clock(); time(&end);
     cout<<"       TIME CONSUMING: "<<(double)(T2-T1)/CLOCKS_PER_SEC<<"  "<<end-start<<endl;
-    // T1=clock();
-    // cout<<"  PCUBATURE: "<<sp.CS_pp2SS_PCUBATUREFROMCTHETA(14000*14000,1,1)<<endl;
-    // T2=clock();
-    // cout<<"       TIME CONSUMING: "<<(double)(T2-T1)/CLOCKS_PER_SEC<<endl;
     cout<<">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"<<endl;
 }
     ltexi();
