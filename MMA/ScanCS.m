@@ -1,8 +1,7 @@
-(* ::Package:: *)
-
+#!/usr/local/bin/MathematicaScript -script
 Install["LoopTools"];
 
-pdfpath = "";
+pdfpath = "/home/ycwu/Workings/SUPPORTINGS/MSTW2008/";
 SetDirectory[pdfpath];
 << mstwpdf.m
 prefix=pdfpath<>"Grids/mstw2008nlo";
@@ -17,7 +16,7 @@ PROCNAME={"HLHL","HHHL"};
 PROCSRCNAME={{"VggHLHL`","CSggHLHL`"},{"VggHHHL`","CSggHHHL`"}};
 
 
-SourceDir="";
+SourceDir="/home/ycwu/Workings/SUPPORTINGS/THDMHiggsPairProduction/MMA";
 SetDirectory[SourceDir];
 Get["PhysicsConstants`"];
 Get["THDMCouplings`"];
@@ -32,7 +31,7 @@ Print["Type: ",type];
 Print["Process:",proc];
 
 
-str=OpenWrite["THDM_"<>TYPENAME[[type]]<>"_gg2"<>PROCNAME[[proc]]<>"_CS_MHL"<>ToString[MHL]<>".dat"];
+str=OpenWrite["Data/THDM_"<>TYPENAME[[type]]<>"_gg2"<>PROCNAME[[proc]]<>"_CS_MHL"<>ToString[MHL]<>".dat"];
 WriteString[str,"MHL  m12  tb  cs\n"];
 tbList={0.5,1.0,5.0,10.0};
 For[itb=1,itb<=Length[tbList],itb++,
@@ -42,6 +41,7 @@ For[itb=1,itb<=Length[tbList],itb++,
 	cs=Func2BeRun[MHL,125.0,m12,ArcTan[tb],ArcTan[tb]]//Quiet;
 	tmp=ToString[MHL]<>"  "<>ToString[m12]<>"  "<>ToString[tb]<>"  "<>ToString[cs]<>"\n";
 	WriteString[str,tmp];
+    ClearCache[];
 	]
 ]
 Close[str];
