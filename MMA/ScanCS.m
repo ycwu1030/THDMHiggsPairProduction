@@ -2,7 +2,7 @@
 
 Install["LoopTools"];
 
-pdfpath = "/Users/ycwu/Workingspace/Utilities/MSTW2008/";
+pdfpath = "";
 SetDirectory[pdfpath];
 << mstwpdf.m
 prefix=pdfpath<>"Grids/mstw2008nlo";
@@ -12,10 +12,12 @@ ReadPDFGrid[prefix,0];
 type=ToExpression[$ScriptCommandLine[[2]]];
 proc=ToExpression[$ScriptCommandLine[[3]]];
 MHL=ToExpression[$ScriptCommandLine[[4]]];
+TYPENAME={"I","II"};
+PROCNAME={"HLHL","HHHL"};
 PROCSRCNAME={{"VggHLHL`","CSggHLHL`"},{"VggHHHL`","CSggHHHL`"}};
 
 
-SourceDir="/Users/ycwu/Desktop/TempFiles/2HDM_HiggsPair/MMA";
+SourceDir="";
 SetDirectory[SourceDir];
 Get["PhysicsConstants`"];
 Get["THDMCouplings`"];
@@ -30,13 +32,16 @@ Print["Type: ",type];
 Print["Process:",proc];
 
 
-str=OpenWrite["CSdata.dat"];
+str=OpenWrite["THDM_"<>TYPENAME[[type]]<>"_gg2"<>PROCNAME[[proc]]<>"_CS_MHL"<>ToString[MHL]<>".dat"];
+WriteString[str,"MHL  m12  tb  cs\n"];
 tbList={0.5,1.0,5.0,10.0};
 For[itb=1,itb<=Length[tbList],itb++,
 	tb=tbList[[itb]];
 	For[m12=0,m12<=200,m12+=10,
 	Print["Calculating CS for: ","MHL=",MHL," tb=",tb," m12=",m12];
 	cs=Func2BeRun[MHL,125.0,m12,ArcTan[tb],ArcTan[tb]]//Quiet;
-	Write[str,StringRiffle[ToString/@{MHL,tb,m12,cs},{"","\t","\n"}]];
+	tmp=ToString[MHL]<>"  "<>ToString[m12]<>"  "<>ToString[tb]<>"  "<>ToString[cs]<>"\n";
+	WriteString[str,tmp];
 	]
 ]
+Close[str];
